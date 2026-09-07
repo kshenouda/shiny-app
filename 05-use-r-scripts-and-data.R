@@ -1,0 +1,68 @@
+# install.packages(c('maps', 'mapproj'))
+library(shiny)
+library(maps)
+library(mapproj)
+
+# 1. Set working directory to the parent shiny-app directory
+setwd('/Users/kiroshenouda/Desktop/COMPSCI/R/shiny-app')
+
+# 2. Load data with readRDS function
+counties = readRDS('data/counties.rds')
+
+# 3. Run helpers.R with source function
+source('helpers.R')
+
+# 4. Create chloropleth map with percent_map function from helpers.R
+# percent_map(counties$white, 'darkgreen', '% White')
+
+# Define UI
+ui = page_sidebar(
+  title = 'censusVis',
+  sidebar = sidebar(
+    helpText('Create a demographic maps with information from the 2010 US Census'),
+    selectInput(
+      'var',
+      label = 'Choose a variable to display',
+      choices = list(
+        'Percent White',
+        'Percent Black',
+        'Percent Hispanic',
+        'Percent Asian'
+      ),
+      selected = 'Percent White'
+    ),
+    sliderInput(
+      'range',
+      label = 'Range of interest:',
+      min = 0,
+      max = 100,
+      value = c(0, 100)
+    )
+  ),
+  card(plotOutput('map'))
+)
+
+# Server logic
+server = function(input, output) {
+  output$map = renderPlot({
+    data = switch(input$var,
+                  'Percent White' = counties$white,
+                  'Percent Black' = counties$black,
+                  'Percent Hispanic' = counties$hispanic,
+                  'Percent Asian' = counties$asian)
+    color = switch(input$var,
+                   "Percent White" = "darkgreen",
+                   "Percent Black" = "black",
+                   "Percent Hispanic" = "darkorange",
+                   "Percent Asian" = "darkviolet")
+    legend = switch(input$var,
+                    "Percent White" = "% White",
+                    "Percent Black" = "% Black",
+                    "Percent Hispanic" = "% Hispanic",
+                    "Percent Asian" = "% Asian")
+    percent_map(data, color, legend, min=input$range[1], max=input$range[2])
+  })
+}
+
+# Run the app
+shinyApp(ui, server)
